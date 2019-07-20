@@ -1,0 +1,13 @@
+module qmaze {
+    requires kotlin.stdlib;
+    requires javafx.controls;
+    requires javafx.fxml;
+    requires javafx.graphics;
+    requires javafx.web;
+    requires tornadofx;
+    //exports org.beryx.jlink.qmaze;
+    exports qmaze;
+    opens qmaze to javafx.graphics;
+    opens qmaze.Agent to junit;
+    opens qmaze.Controller to junit;
+}

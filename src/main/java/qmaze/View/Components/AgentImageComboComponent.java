@@ -32,7 +32,7 @@ public class AgentImageComboComponent extends Component {
         agentImage.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
             public void changed(ObservableValue ov, String t, String t1) { 
-                assets.setTheme(t1);
+                //assets.setTheme(t1);
                 controller.roomReset();
             }    
         });
