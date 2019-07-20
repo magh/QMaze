@@ -51,7 +51,7 @@ public class AgentMemoryTest {
         assertEquals((increasedReward ), memory.rewardFromAction(anotherState, currentState), 0);
         
     }
-    
+
     @Test
     public void testBuildUpMemory() {
         //Move from SS -> S1 -> SS -> S2 -> GS

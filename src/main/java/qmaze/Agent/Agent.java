@@ -1,6 +1,8 @@
 package qmaze.Agent;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+
 import qmaze.Environment.Coordinates;
 
 /**
@@ -43,27 +45,65 @@ public class Agent {
     }
         
     public Coordinates chooseAction(ArrayList<Coordinates> nextAvailableActions) throws NoWhereToGoException {
-         //What if there are no available actions?
-        // Should this validation happen further up...
         if (nextAvailableActions.isEmpty()) {
             throw new NoWhereToGoException(memory.getCurrentState());
+        } else {
+            double useMemory = Math.random();
+            Coordinates nextAction;
+            if (useMemory < learningParameters.getEpsilon()) {
+                nextAction = pickRandomAction(nextAvailableActions);
+            } else {
+                nextAction = pickBestActionOrRandom(nextAvailableActions);
+            }
+
+            return nextAction;
         }
-        
-        //CODE TO SELECT NEXT ACTION
-        Coordinates nextAction;
-        
-        throw new RuntimeException("IMPLEMENT ME!");
     }
     
     public void takeAction(Coordinates actionTaken, double reward) {
-                
-        double qValue = 0; //TO WORK OUT!!!!
-        memory.updateMemory(actionTaken, qValue);
-        memory.move(actionTaken);
-        throw new RuntimeException("IMPLEMENT ME!");
+        double currentQValue = this.memory.rewardFromAction(this.location(), actionTaken);
+        double estimatedBestFutureReward = 0.0D;
+        ArrayList<Coordinates> actionsForFutureState = this.memory.actionsForState(actionTaken);
+        if (!actionsForFutureState.isEmpty()) {
+            Coordinates max_reward_from_subequent_action = this.pickBestActionOrRandom(actionsForFutureState);
+            estimatedBestFutureReward = this.memory.rewardFromAction(actionTaken, max_reward_from_subequent_action);
+        }
+
+        double alpha = this.learningParameters.getLearningRate();
+        double gamma = this.learningParameters.getGamma();
+        double qValue = alpha * (reward + gamma * estimatedBestFutureReward - currentQValue);
+        this.memory.updateMemory(actionTaken, qValue);
+        this.memory.move(actionTaken);
     }
-    
-    
+
+    private Coordinates pickRandomAction(ArrayList<Coordinates> actions) {
+        int options = actions.size();
+        int choice = (int)(Math.random() * (double)options);
+        return (Coordinates)actions.get(choice);
+    }
+
+    private Coordinates pickBestActionOrRandom(ArrayList<Coordinates> actions) {
+        ArrayList<Coordinates> bestActions = new ArrayList();
+        double highestReward = 0.0D;
+        Iterator var5 = actions.iterator();
+
+        while(var5.hasNext()) {
+            Coordinates action = (Coordinates)var5.next();
+            double rewardMemory = this.memory.rewardFromAction(this.location(), action);
+            if (rewardMemory > highestReward) {
+                highestReward = rewardMemory;
+                bestActions = new ArrayList();
+                bestActions.add(action);
+            }
+
+            if (rewardMemory == highestReward) {
+                bestActions.add(action);
+            }
+        }
+
+        return this.pickRandomAction(bestActions);
+    }
+
     public AgentMemory getMemory() {
         return memory;
     }

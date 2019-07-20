@@ -40,7 +40,18 @@ public class AgentMemory {
     * For hints on the steps I need to take, see hints.txt
     */
     public void updateMemory(Coordinates action, double reward) {
-        throw new RuntimeException("IMPLEMENT ME!");
+        HashMap nextSteps = (HashMap)this.mazeMemory.get(this.currentState);
+        if (nextSteps == null) {
+            nextSteps = new HashMap();
+        }
+
+        Double rewardMemory = (Double)nextSteps.get(action);
+        if (rewardMemory == null) {
+            rewardMemory = new Double(0.0D);
+        }
+
+        nextSteps.put(action, rewardMemory + reward);
+        this.mazeMemory.put(this.currentState, nextSteps);
     }
     
     public void move(Coordinates action) { 
