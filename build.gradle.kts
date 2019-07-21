@@ -31,7 +31,7 @@ dependencies {
 }
 
 application {
-    mainClassName = "qmaze.QMaze"
+    mainClassName = "qmaze.view.QMazeApp"
 }
 
 jlink {
