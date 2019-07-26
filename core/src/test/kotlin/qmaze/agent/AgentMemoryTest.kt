@@ -4,7 +4,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import qmaze.environment.Coordinate
-import java.util.*
 
 /**
  *
@@ -68,7 +67,7 @@ class AgentMemoryTest {
         //SS : S1,0
         val memory = AgentMemory()
         memory.setStartingState(startingState)
-        var actionsFromStartingState: ArrayList<*> = memory.actionsForState(startingState)
+        var actionsFromStartingState = memory.actionsForState(startingState)
         assertTrue(actionsFromStartingState.isEmpty())
         memory.updateMemory(stateOne, 0.0)
         actionsFromStartingState = memory.actionsForState(startingState)
@@ -78,7 +77,7 @@ class AgentMemoryTest {
         //S1 : SS,0
         assertEquals(0.0, memory.rewardFromAction(startingState, stateOne), 0.0)
         memory.move(stateOne)
-        var actionsFromStateOne: ArrayList<*> = memory.actionsForState(stateOne)
+        var actionsFromStateOne = memory.actionsForState(stateOne)
         assertTrue(actionsFromStateOne.isEmpty())
         memory.updateMemory(startingState, 0.0)
         actionsFromStateOne = memory.actionsForState(stateOne)
@@ -98,7 +97,7 @@ class AgentMemoryTest {
         memory.move(stateTwo)
 
         //S2 : GS,100
-        var actionsFromStateTwo: ArrayList<*> = memory.actionsForState(stateTwo)
+        var actionsFromStateTwo = memory.actionsForState(stateTwo)
         assertTrue(actionsFromStateTwo.isEmpty())
         memory.updateMemory(goalState, 100.0)
         actionsFromStateTwo = memory.actionsForState(stateTwo)

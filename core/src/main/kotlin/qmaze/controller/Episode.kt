@@ -14,12 +14,12 @@ private const val STEP_LIMIT = 5000
  * @author katharine
  * The events that join the agent with the environment
  */
-open class Episode(val agent: Agent, val maze: Maze, val startingState: Coordinate) {
+open class Episode(val agent: Agent, val maze: Maze) {
 
     val episodeSteps: MutableList<Coordinate> = ArrayList()
 
     //Where is the agent?
-    //Have a look around the maze
+    //Have a look around the mazeController
     //Decide on action
     //@Throws(EpisodeInterruptedException::class)
     fun nextAction(): Coordinate {
@@ -36,13 +36,13 @@ open class Episode(val agent: Agent, val maze: Maze, val startingState: Coordina
 
     @Throws(EpisodeInterruptedException::class)
     fun play() {
-        agent.start(startingState)
-        episodeSteps.add(startingState)
+        agent.start(maze.start)
+        episodeSteps.add(maze.start)
         while (!atGoalState()) {
             val action = nextAction()
 
-            //Did the maze give a reward?
-            val reward = maze.getReward(action)
+            //Did the mazeController give a reward?
+            val reward = maze.getRoom(action)!!.reward
             agent.takeAction(action, reward)
 
             recordSteps(action)
@@ -60,7 +60,7 @@ open class Episode(val agent: Agent, val maze: Maze, val startingState: Coordina
 
     fun atGoalState(): Boolean {
         return agent.location()?.let {
-            maze.isGoalState(it)
+            maze.goal == it
         } ?: false
     }
 

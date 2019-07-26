@@ -6,4 +6,4 @@ package qmaze.environment
  * COLUMN IS X
  * ROW IS Y
  */
-data class Coordinate(var xCoordinate: Int = 0, var yCoordinate: Int = 0)
+data class Coordinate(var x: Int, var y: Int)

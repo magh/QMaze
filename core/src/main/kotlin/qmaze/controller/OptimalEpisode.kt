@@ -1,22 +1,21 @@
 package qmaze.controller
 
 import qmaze.agent.Agent
-import qmaze.agent.AgentLearningParameters
 import qmaze.environment.Coordinate
 import qmaze.environment.Maze
 
 /**
  * @author katharine
  */
-class OptimalEpisode(agent: Agent, maze: Maze, startingState: Coordinate) : Episode(agent, maze, startingState) {
+class OptimalEpisode(agent: Agent, maze: Maze) : Episode(agent, maze) {
 
     @Throws(EpisodeInterruptedException::class)
     fun findOptimalPath(): List<Coordinate> {
-        val originalLearningParameters = agent.learningParameters
-        haltExploration(originalLearningParameters)
+        val originalEpsilon = agent.epsilon
+        haltExploration()
 
-        agent.start(startingState)
-        episodeSteps.add(startingState)
+        agent.start(maze.start)
+        episodeSteps.add(maze.start)
         while (!atGoalState()) {
             val action = nextAction()
             agent.move(action)
@@ -25,20 +24,16 @@ class OptimalEpisode(agent: Agent, maze: Maze, startingState: Coordinate) : Epis
         }
         println("Found optimalPath in " + episodeSteps.size + " steps.")
 
-        resumeExploration(originalLearningParameters)
+        resumeExploration(originalEpsilon)
         return episodeSteps
     }
 
-    private fun haltExploration(originalLearningParameters: AgentLearningParameters) {
-        val noExploreLearningParameters = AgentLearningParameters(
-            0.0,
-            originalLearningParameters.learningRate, originalLearningParameters.gamma
-        )
-        agent.learningParameters = noExploreLearningParameters
+    private fun haltExploration() {
+        agent.epsilon = 0.0
     }
 
-    private fun resumeExploration(originalLearningParameters: AgentLearningParameters) {
-        agent.learningParameters = originalLearningParameters
+    private fun resumeExploration(epsilon: Double) {
+        agent.epsilon = epsilon
     }
 
 }

@@ -2,9 +2,10 @@ package qmaze.controller
 
 import org.junit.Test
 import qmaze.agent.Agent
-import qmaze.agent.AgentLearningParameters
+import qmaze.environment.Array2D
 import qmaze.environment.Coordinate
 import qmaze.environment.Maze
+import qmaze.environment.Room
 
 /**
  * @author katharine
@@ -16,18 +17,17 @@ class EpisodeTest {
      * Test of play method, of class Episode.
      */
     @Test
-    @Throws(Exception::class)
     fun testPlay() {
         //setup
-        val startingState = Coordinate(0, 0)
         val maze_size = 4
+        val start = Coordinate(0, 0)
         val goalState = Coordinate(maze_size - 1, maze_size - 1)
-        val agentLP = AgentLearningParameters(0.1, 0.1, 0.1)
-        val agent = Agent(agentLP)
-        val maze = Maze(maze_size, maze_size)
-        maze.setGoalState(goalState, 100.0)
+        val agent = Agent(0.1, 0.1, 0.1)
+        val rooms = Array2D<Room>(maze_size, maze_size, Room())
+        val maze = Maze(rooms, start, goalState)
+        val ep = Episode(agent, maze)
         //test
-        Episode(agent, maze, startingState).play()
+        ep.play()
     }
 
 }

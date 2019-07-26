@@ -21,7 +21,7 @@ import java.util.ArrayList
  * - My movements overall - instead I am told to move at each step
  * and given information about the environment.
  */
-class Agent(var learningParameters: AgentLearningParameters) {
+class Agent(var epsilon: Double, private val learningRate: Double, private val gamma: Double) {
 
     val memory: AgentMemory = AgentMemory()
 
@@ -42,7 +42,7 @@ class Agent(var learningParameters: AgentLearningParameters) {
         if (nextAvailableActions.isEmpty()) {
             throw NoWhereToGoException(memory.currentState!!)
         } else {
-            return if (Math.random() < learningParameters.epsilon) {
+            return if (Math.random() < epsilon) {
                 pickRandomAction(nextAvailableActions)
             } else {
                 pickBestActionOrRandom(nextAvailableActions)
@@ -59,9 +59,7 @@ class Agent(var learningParameters: AgentLearningParameters) {
             estimatedBestFutureReward = this.memory.rewardFromAction(actionTaken, maxRewardFromSubequentAction)
         }
 
-        val alpha = this.learningParameters.learningRate
-        val gamma = this.learningParameters.gamma
-        val qValue = alpha * (reward + gamma * estimatedBestFutureReward - currentQValue)
+        val qValue = learningRate * (reward + gamma * estimatedBestFutureReward - currentQValue)
         this.memory.updateMemory(actionTaken, qValue)
         this.memory.move(actionTaken)
     }
@@ -93,10 +91,7 @@ class Agent(var learningParameters: AgentLearningParameters) {
     }
 
     fun introduceSelf(startingState: Coordinate) {
-        val alpha = learningParameters.learningRate
-        val gamma = learningParameters.gamma
-        val epsilon = learningParameters.epsilon
-        println("I'm training with epsilon: $epsilon gamma: $gamma and alpha: $alpha\nStaring at $startingState")
+        println("I'm training with epsilon: $epsilon gamma: $gamma and alpha: $learningRate\nStaring at $startingState")
     }
 
 }

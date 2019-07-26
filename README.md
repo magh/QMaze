@@ -12,6 +12,12 @@ Dive in: [see this great book](https://mitpress.mit.edu/books/reinforcement-lear
 
 `java --module-path /usr/share/openjfx/lib --add-modules javafx.web,javafx.controls,javafx.fxml -cp build/libs/qmaze-1.0-SNAPSHOT.jar qmaze.QMaze`
 
+## Configuration
+
+Epsilon (Probability Explore): 
+Gamma (Reward Discount): 
+Alpha (Learning Rate): 
+
 ## Reinforcement Learning?
 
 Yes. This is a branch of Machine Learning, considered distinct from Supervised and Unsupervised Learning.

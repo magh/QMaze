@@ -2,9 +2,10 @@ package qmaze.view
 
 import javafx.beans.value.ChangeListener
 import javafx.geometry.Orientation
+import javafx.scene.image.Image
 import javafx.scene.layout.Border
 import javafx.scene.layout.HBox
-import qmaze.view.components.popupInstructions
+import javafx.scene.paint.ImagePattern
 import tornadofx.App
 import tornadofx.View
 import tornadofx.action
@@ -25,6 +26,11 @@ import tornadofx.text
 const val WIDTH = 1200.0
 const val HEIGHT = 600.0
 
+val AGENT = ImagePattern(Image("/agent.png"))
+val AGENT_DEATH = ImagePattern(Image("/agentDeath.png"))
+val AGENT_AT_GOAL = ImagePattern(Image("/agentAtGoal.png"))
+val GOAL = ImagePattern(Image("/goal.png"))
+
 class QMazeView : View() {
     override val root = stackpane {
         title = "Q Learning"
@@ -39,7 +45,7 @@ class QMazeView : View() {
                 padding = insets(5, 0, 5, 0)
                 vgap = 4.0
                 hgap = 4.0
-                style = buttonPanelBackground
+                style = "-fx-background-color: #a5ea8a;"
 
                 hbox {
                     padding = insets(15, 12, 15, 12)
@@ -57,7 +63,7 @@ class QMazeView : View() {
                     }
                     hbox {
                         button("Reset") {
-                            action(controller::hardReset)
+                            action(controller::resetHard)
                         }
                     }
                     //TODO enabled: controller.state === ControllerState.TRAINED_STATE
@@ -74,7 +80,7 @@ class QMazeView : View() {
                     padding = insets(5, 0, 5, 0)
                     vgap = 4.0
                     hgap = 4.0
-                    style = buttonPanelBackground
+                    style = "-fx-background-color: #a5ea8a;"
                     maxHeight = 150.0
                     hbox {
                         add(slider("Probability Explore", initialEpsilon, controller.sliderEpsilonListener))
@@ -103,7 +109,7 @@ class QMazeView : View() {
                         hgap = 10.0
                         vgap = 10.0
                         padding = insets(10, 10, 10, 10)
-                        style = learningPanelBackground
+                        style = "-fx-background-color: #e4f9db"
                     }
                     center = controller.qTableGrid
                 }

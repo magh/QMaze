@@ -1,20 +1,22 @@
-package qmaze.view.components
+package qmaze.view
 
-import javafx.scene.control.*
+import javafx.scene.control.Alert
+import javafx.scene.control.ButtonBar
+import javafx.scene.control.ButtonType
+import javafx.scene.control.Dialog
+import javafx.scene.control.DialogPane
 import javafx.scene.shape.Rectangle
 import javafx.scene.web.WebView
-import qmaze.view.AGENT_AT_GOAL
-import qmaze.view.AGENT_DEATH
 import java.io.IOException
 
-fun popupAlert(message: String) {
+fun popupAlert(message: String, content: String) {
     val alert = Alert(Alert.AlertType.ERROR)
     alert.title = "Bad News"
     alert.headerText = message
     val r = Rectangle(50.0, 50.0)
     r.fill = AGENT_DEATH
     alert.graphic = r
-    alert.contentText = "There's no goal state I can get to. You're killing me!"
+    alert.contentText = content
     alert.showAndWait()
 }
 
@@ -22,10 +24,10 @@ fun popupInstructions(){
     val dp = DialogPane()
 
     val info = Dialog<String>()
-    info.setWidth(350.0)
-    info.setHeight(600.0)
-    info.setResizable(true)
-    info.setTitle("Instructions")
+    info.width = 350.0
+    info.height = 600.0
+    info.isResizable = true
+    info.title = "Instructions"
 
     dp.headerText = "Configuring the Maze"
 
@@ -46,6 +48,6 @@ fun popupInstructions(){
     }
 
     dp.content = webView
-    info.setDialogPane(dp)
+    info.dialogPane = dp
     info.showAndWait()
 }

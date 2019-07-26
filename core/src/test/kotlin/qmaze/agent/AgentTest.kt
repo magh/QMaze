@@ -1,21 +1,16 @@
 package qmaze.agent
 
-import org.junit.Before
-import org.junit.Test
-import qmaze.environment.Coordinate
-
-import java.util.ArrayList
-
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Test
+import qmaze.environment.Coordinate
+import java.util.ArrayList
 
 /**
  * @author katharine
  */
 class AgentTest {
 
-    private val learningParameters: AgentLearningParameters = AgentLearningParameters(0.1, 0.1, 0.7)
-    
     /**
      * Test of start method, of class Agent.
      */
@@ -23,7 +18,7 @@ class AgentTest {
     fun testStart() {
         println("start")
         val startingState = Coordinate(0, 0)
-        val agent = Agent(learningParameters)
+        val agent = Agent(0.1, 0.1, 0.7)
         agent.start(startingState)
         assertEquals(startingState, agent.location())
     }
@@ -38,7 +33,7 @@ class AgentTest {
         val nextAction = Coordinate(1, 0)
         val nextAvailableActions = ArrayList<Coordinate>()
         nextAvailableActions.add(nextAction)
-        val agent = Agent(learningParameters)
+        val agent = Agent(0.1, 0.1, 0.7)
         agent.start(Coordinate(0, 0))
         val result = agent.chooseAction(nextAvailableActions)
         assertEquals(nextAction, result)
@@ -56,7 +51,7 @@ class AgentTest {
         val nextAvailableActions = ArrayList<Coordinate>()
         nextAvailableActions.add(nextAction1)
         nextAvailableActions.add(nextAction2)
-        val agent = Agent(learningParameters)
+        val agent = Agent(0.1, 0.1, 0.7)
         agent.start(Coordinate(0, 0))
         val result = agent.chooseAction(nextAvailableActions)
         assertTrue(result == nextAction1 || result == nextAction2)
@@ -78,7 +73,7 @@ class AgentTest {
         val stateTwo = Coordinate(1, 0)
         val goalState = Coordinate(1, 1)
 
-        val agent = Agent(learningParameters)
+        val agent = Agent(0.1, 0.1, 0.7)
         agent.start(startingState)
         val memory = agent.memory
 

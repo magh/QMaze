@@ -12,7 +12,7 @@ import java.util.ArrayList
  * The Maze does not know:
  * - About the agent
  * Through the Maze we can ask:
- * - Questions about state for specific locations in the maze.
+ * - Questions about state for specific locations in the mazeController.
  * Through the Maze we can control:
  * - Locations that are opened or closed
  * Shouldn't do:
@@ -21,64 +21,48 @@ import java.util.ArrayList
  * COLUMN IS X
  * ROW IS Y
  */
-class Maze(rows: Int, columns: Int) {
-
-    private val rooms: MutableList<Room>
-
-    private var goal: Room? = null
+class Maze(private val rooms: Array2D<Room>,
+           var start: Coordinate = Coordinate(0, 0),
+           var goal: Coordinate = Coordinate(rooms.xSize - 1, rooms.ySize - 1)) {
 
     init {
-        this.rooms = ArrayList()
-        buildMaze(rows, columns)
-    }
-
-    fun getRooms(): List<Room> {
-        return rooms.toList()
-    }
-
-    private fun getRoom(state: Coordinate): Room? {
-        for (room in rooms) {
-            if (room.coordinate == state) {
-                return room
-            }
+        //TODO fix
+        getRoom(goal)?.let {
+            setRoom(goal.x, goal.y, it.copy(reward = 100.0))
         }
-        return null
     }
 
-    fun setOpen(state: Coordinate, open: Boolean) {
-        val r = getRoom(state)
-        r!!.open = open
+    fun getRoom(state: Coordinate): Room? {
+        return rooms.get(state.x, state.y)
     }
 
-    fun setGoalState(state: Coordinate, reward: Double) {
-        goal = getRoom(state)
-        goal!!.reward = reward
+    fun setRoom(x: Int, y: Int, room: Room) {
+        rooms.set(x, y, room)
     }
 
-    fun isGoalState(state: Coordinate): Boolean {
-        val room = getRoom(state)
-        return room == goal
+    fun forEach(block: (x: Int, y: Int, room: Room) -> Unit){
+        rooms.forEach(block)
     }
 
-    fun getReward(action: Coordinate): Double {
-        val r = getRoom(action)
-        return r!!.reward
+    fun getXSize(): Int {
+        return rooms.xSize
     }
 
-    private fun buildMaze(rows: Int, columns: Int) {
-        for (row in 0 until rows) {
-            for (column in 0 until columns) {
-                val r = Room(Coordinate(column, row))
-                rooms.add(r)
-            }
-        }
+    fun getYSize(): Int {
+        return rooms.ySize
     }
 
     fun getAdjoiningStates(state: Coordinate): List<Coordinate> {
-        val r = getRoom(state)
         val adjoiningRooms = ArrayList<Coordinate>()
-        rooms.stream().filter { otherRoom -> otherRoom.open && otherRoom.adjoins(r!!) }
-            .forEachOrdered { otherRoom -> adjoiningRooms.add(otherRoom.coordinate) }
+        for (y in 0 until rooms.ySize) {
+            for (x in 0 until rooms.xSize) {
+                val c = Coordinate(x, y)
+                val otherRoom = rooms.get(x, y)
+                if (otherRoom.open && adjoins(state, c)) {
+                    adjoiningRooms.add(c)
+                }
+            }
+        }
         return adjoiningRooms
     }
 

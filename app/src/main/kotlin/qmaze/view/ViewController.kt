@@ -1,34 +1,29 @@
 package qmaze.view
 
+import javafx.animation.KeyFrame
+import javafx.animation.Timeline
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.value.ChangeListener
-import javafx.collections.FXCollections
-import javafx.scene.Node
-import javafx.scene.control.Alert
-import javafx.scene.control.ChoiceDialog
+import javafx.event.ActionEvent
+import javafx.event.EventHandler
 import javafx.scene.control.Label
 import javafx.scene.control.Tooltip
-import javafx.scene.layout.Background
-import javafx.scene.layout.BackgroundFill
-import javafx.scene.layout.GridPane
-import javafx.scene.layout.Pane
-import javafx.scene.layout.StackPane
+import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
+import javafx.util.Duration
 import qmaze.controller.LearningController
 import qmaze.controller.TrainingConfig
 import qmaze.controller.TrainingInterruptedException
+import qmaze.environment.Array2D
 import qmaze.environment.Coordinate
+import qmaze.environment.Maze
 import qmaze.environment.Room
-import qmaze.view.components.ControllerState
-import qmaze.view.components.popupAlert
-import qmaze.view.mazecomponents.QMazeGridController
+import qmaze.view.ViewController.ControllerState.*
 import tornadofx.clear
-
-private const val SET_START = "Set starting room"
-private const val SET_GOAL = "Set goal room"
+import java.util.*
 
 const val initialGamma = 0.7
 const val initialEpsilon = 0.1
@@ -37,16 +32,26 @@ const val initialRows = 4
 const val initialColumns = 4
 const val initialEpisodes = 50
 
+private const val ANIMATION_INTERVAL: Long = 500
+
 /**
  * @author katharine
  * 2 types of component: animated and non-animated.
  * - The non-animated (e.g. buttons, sliders, Q Learning panel) are all treated the same.
- * - The animated (maze) is a special case, built by the controller and directly managed.
+ * - The animated (mazeController) is a special case, built by the controller and directly managed.
  * The ComponentController:
  * - Acts as a go between for LearningController and components
  * - Manages state across the Components.
  */
 class ViewController {
+
+    //Playing with mazeController rooms, no need to resize but need to disable optimal path etc ;
+    enum class ControllerState {
+        RESET_STATE, //("Reset"), //Hard reset everything to initial values
+        TRAINED_STATE, //("Trained"), //We have trained the algorithm, so we can show optimal path, heatmap
+        ADJUST_PARAM_STATE, //("PreTrain"), //Playing with variables, so need to resize mazeController, etc
+        ADJUST_MAZE_STATE //("PreTrainNoAdjust")
+    }
 
     val mazeSpinnerRows = SimpleIntegerProperty(initialRows)
     val mazeSpinnerColumns = SimpleIntegerProperty(initialColumns)
@@ -59,289 +64,309 @@ class ViewController {
     lateinit var qTableGrid: GridPane
     lateinit var mazeRoomGrid: GridPane
 
-    val learningController: LearningController
-    var state: ControllerState
+    private var learningController: LearningController? = null
 
-    val maze: QMazeGridController
+    private var agentLocation: Coordinate? = null
+
+    private var maze: Maze? = null
+
+    // roomCoordinate, roomVisitCount
+    private var heatMap: Map<Coordinate, Int>? = null
 
     init {
-        this.state = ControllerState.RESET_STATE
-        learningController = LearningController()
-        maze = QMazeGridController(this)
-
         mazeSpinnerColumns.addListener { _, _, _ ->
-            configReset()
+            resetConfig()
         }
         mazeSpinnerRows.addListener { _, _, _ ->
-            configReset()
+            resetConfig()
         }
         mazeSpinnerEpisodes.addListener { _, _, _ ->
-            episodesReset()
+            resetEpisodes()
         }
     }
 
-    /**
-     * State Resets
-     */
-    private fun configReset() {
-        this.state = ControllerState.ADJUST_PARAM_STATE
-        resetComponents()
+    fun resetHard() {
+        resetComponents(RESET_STATE)
     }
 
-    private fun episodesReset() {
-        this.state = ControllerState.ADJUST_MAZE_STATE
-        resetComponents()
+    private fun resetRoom() {
+        resetComponents(ADJUST_MAZE_STATE)
     }
 
-    private fun resetComponents() {
-        maze.reset(this)
-        resetQTable()
+    private fun resetConfig() {
+        resetComponents(ADJUST_PARAM_STATE)
     }
 
-    private fun resetQTable() {
+    private fun resetEpisodes() {
+        resetComponents(ADJUST_MAZE_STATE)
+    }
+
+    private fun resetComponents(state: ControllerState) {
+        agentLocation = null
+        if (state === RESET_STATE || state === ADJUST_PARAM_STATE) {
+            //Reset mazeController, according to controller's instructions
+            initialiseMazeRooms()
+        }
+        if (state === ADJUST_MAZE_STATE || state === RESET_STATE) {
+            //Clear heatmap
+            heatMap = HashMap()
+        }
+        redrawMaze()
+        redrawQTable()
+    }
+
+    private fun redrawQTable() {
         qTableGrid.clear()
-        learningController.getLearnings().entries.forEach {
-            qTableGrid.add(addNode(it, maze.goalState!!), it.key.xCoordinate, it.key.yCoordinate)
-        }
-    }
-
-    private fun addNode(
-        it: Map.Entry<Coordinate, Map<Coordinate, Double>>, goalState: Coordinate
-    ): Node {
-        val textPane = Pane()
-        val roomCoordinate = it.key
-        val columnIndex = it.key.xCoordinate
-        val rowIndex = it.key.yCoordinate
-        val sb = StringBuilder()
-        sb.append("Room ").append(rowIndex).append(",").append(columnIndex).append("\n")
-        val actions = it.value
-        var toolTipText = ""
-        if (goalState == roomCoordinate) {
-            sb.append("GOAL")
-            toolTipText = "Yay!"
-            textPane.style = goldBackground //assets.getGoalRoomBackground());
-        } else if (actions.isEmpty()) {
-            sb.append("No info")
-            toolTipText = "Maybe we didn't visit this room?"
-            textPane.style = unvisitedRoom //assets.getUnvisitedRoomBackground());
-        } else {
-            for (entry in actions.entries) {
-                val nextRoom = entry.key
-                val qValueForText = String.format("%.2f", entry.value)
-                sb.append(qValueForText)
-                sb.append(getArrowDirection(roomCoordinate, nextRoom))
-                sb.append("\n")
-                textPane.style = whiteBackground //assets.getWhiteBackground());
-                val qValueForToolTip = String.format("%.4f", entry.value)
-                toolTipText = toolTipText + "Moving " + getDirectionDesc(
-                    roomCoordinate, nextRoom
-                ) + " for " + qValueForToolTip + "\n"
+        learningController?.getLearnings()?.entries.orEmpty().forEach {
+            val textPane = Pane()
+            val roomCoordinate = it.key
+            val columnIndex = it.key.x
+            val rowIndex = it.key.y
+            val sb = StringBuilder()
+            sb.append("Room ").append(rowIndex).append(",").append(columnIndex).append("\n")
+            val actions = it.value
+            var toolTipText = ""
+            when {
+                maze?.goal == roomCoordinate -> {
+                    sb.append("GOAL")
+                    toolTipText = "Yay!"
+                    textPane.style = "-fx-background-color: #FFFF9A"
+                }
+                actions.isEmpty() -> {
+                    sb.append("No info")
+                    toolTipText = "Maybe we didn't visit this room?"
+                    textPane.style = "-fx-background-color: #f2f9ef"
+                }
+                else -> for (entry in actions.entries) {
+                    val (arrow, desc) = getArrowDescDirection(roomCoordinate, entry.key)
+                    val qValueForText = String.format("%.2f", entry.value)
+                    sb.append(qValueForText)
+                    sb.append(arrow)
+                    sb.append("\n")
+                    textPane.style = "-fx-background-color: #ffffff"
+                    val qValueForToolTip = String.format("%.4f", entry.value)
+                    toolTipText += "Moving $desc for $qValueForToolTip\n"
+                }
             }
+            val t = Text(sb.toString())
+
+            val tp = Tooltip(toolTipText)
+            Tooltip.install(textPane, tp)
+
+            textPane.children.add(t)
+            textPane.setMinSize(60.0, 60.0)
+            textPane.setMaxSize(70.0, 70.0)
+
+            qTableGrid.add(textPane, it.key.x, it.key.y)
         }
-        val t = Text(sb.toString())
-
-        val tp = Tooltip(toolTipText)
-        Tooltip.install(textPane, tp)
-
-        textPane.children.add(t)
-        textPane.setMinSize(60.0, 60.0)
-        textPane.setMaxSize(70.0, 70.0)
-        return textPane
     }
 
-    private fun getArrowDirection(currentRoom: Coordinate, nextRoom: Coordinate): String {
-        val currentRow = currentRoom.yCoordinate
-        val currentColumn = currentRoom.xCoordinate
-        val nextRow = nextRoom.yCoordinate
-        val nextColumn = nextRoom.xCoordinate
+    private fun getArrowDescDirection(currentRoom: Coordinate, nextRoom: Coordinate): Pair<String, String> {
+        val currentRow = currentRoom.y
+        val currentColumn = currentRoom.x
+        val nextRow = nextRoom.y
+        val nextColumn = nextRoom.x
         if (currentRow == nextRow && currentColumn > nextColumn) {
-            return " <- "
+            return Pair(" <- ", "left")
         } else if (currentRow == nextRow && currentColumn < nextColumn) {
-            return " -> "
+            return Pair(" -> ", "right")
         } else if (currentRow > nextRow && currentColumn == nextColumn) {
-            return " ^ "
+            return Pair(" ^ ", "up")
         } else if (currentRow < nextRow && currentColumn == nextColumn) {
-            return " v "
+            return Pair(" v ", "down")
         }
-        return nextRoom.toString()
+        return Pair(nextRoom.toString(), nextRoom.toString())
     }
 
-    private fun getDirectionDesc(currentRoom: Coordinate, nextRoom: Coordinate): String {
-        val currentRow = currentRoom.yCoordinate
-        val currentColumn = currentRoom.xCoordinate
-        val nextRow = nextRoom.yCoordinate
-        val nextColumn = nextRoom.xCoordinate
-        if (currentRow == nextRow && currentColumn > nextColumn) {
-            return "left"
-        } else if (currentRow == nextRow && currentColumn < nextColumn) {
-            return "right"
-        } else if (currentRow > nextRow && currentColumn == nextColumn) {
-            return "up"
-        } else if (currentRow < nextRow && currentColumn == nextColumn) {
-            return "down"
-        }
-        return nextRoom.toString()
-    }
-
-    fun hardReset() {
-        this.state = ControllerState.RESET_STATE
-        resetComponents()
-    }
-
-    private fun roomReset() {
-        this.state = ControllerState.ADJUST_MAZE_STATE
-        resetComponents()
-    }
-
-    /**
-     * Actions
-     */
     fun startTraining() {
         println("Training")
-        val previousState = this.state
         try {
-            this.state = ControllerState.TRAINED_STATE
-            learningController.startLearning(
-                maze.rooms!!.toList(), maze.rows, maze.columns, maze.startingState!!, getTrainingConfig()
-            )
-            resetComponents()
+            learningController = maze?.let { LearningController(it, getTrainingConfig()) }
+            heatMap = learningController?.startLearning()
+            resetComponents(TRAINED_STATE)
         } catch (te: TrainingInterruptedException) {
-            showAlert(te.message!!)
-            this.state = previousState
+            popupAlert(te.message!!, "There's no goal state I can get to. You're killing me!")
         }
 
     }
 
     fun showOptimalPath() {
         println("Finding optimal path...")
-        val optimalPath = learningController.getOptimalPath(maze.startingState!!)
-        maze.animateMap(optimalPath, this)
-    }
-
-    private fun showAlert(message: String) {
-        popupAlert(message)
+        learningController?.getOptimalPath()?.let {
+            animateMap(it)
+        }
     }
 
     val sliderEpsilonListener = ChangeListener<Number> { _, _, newValue ->
         sliderEpsilon.value = newValue.toDouble()
-        configReset()
+        resetConfig()
     }
 
     val sliderGammaListener = ChangeListener<Number> { _, _, newValue ->
         sliderGamma.value = newValue.toDouble()
-        configReset()
+        resetConfig()
     }
 
     val sliderAlphaListener = ChangeListener<Number> { _, _, newValue ->
         sliderAlpha.value = newValue.toDouble()
-        episodesReset()
+        resetEpisodes()
     }
 
-    fun getTrainingConfig(): TrainingConfig {
-        return TrainingConfig(
-            mazeSpinnerEpisodes.value,
-            mazeSpinnerRows.value,
-            mazeSpinnerColumns.value,
-            sliderGamma.value,
-            sliderEpsilon.value,
-            sliderAlpha.value
-        )
+    private fun getTrainingConfig(): TrainingConfig {
+        return TrainingConfig(mazeSpinnerEpisodes.value, sliderGamma.value, sliderEpsilon.value, sliderAlpha.value)
     }
 
-    fun redrawMaze() {
+    private fun redrawMaze() {
         mazeRoomGrid.clear()
-        maze.rooms?.forEach {
-            mazeRoomGrid.add(addRoom(it, maze), it.coordinate.xCoordinate, it.coordinate.yCoordinate)
+
+        //Get max visit count
+        val maxVisit = heatMap?.let { getTotalVisitCount(it) }
+        val highestVisit = heatMap?.let { getHighestVisitCount(it) }
+
+        maze?.forEach { col, row, room ->
+            val roomCoordinate = Coordinate(col, row)
+            val r = Rectangle(50.0, 50.0)
+            val open = room.open
+            val hasAgent = roomCoordinate == agentLocation
+            val percentageVisits = heatMap?.get(roomCoordinate)?.let { vc -> maxVisit?.let { mv -> vc / mv } } ?: 0.0
+            val totalVisits = heatMap?.get(roomCoordinate)?.let { vc -> highestVisit?.let { hv -> vc / hv } } ?: 0.0
+            val fillFactor = (percentageVisits + totalVisits) / 2
+            val stack = StackPane()
+            stack.shape = r
+            val p = if (open) {
+                Color.color(1 - fillFactor, 1.0, 1 - fillFactor)
+            } else {
+                Color.DARKGRAY
+            }
+
+            val bf = BackgroundFill(p, null, null)
+            stack.background = Background(bf)
+
+            val r2 = Rectangle(50.0, 50.0)
+
+            if (roomCoordinate == maze?.goal) {
+                if (hasAgent) {
+                    r2.fill = AGENT_AT_GOAL
+                } else {
+                    r2.fill = GOAL
+                }
+                //r2.setOpacity(0.4);
+            } else if (roomCoordinate == maze?.start && !hasAgent) {
+                r2.opacity = 0.0
+                stack.children.add(Label("X"))
+            } else if (hasAgent) {
+                r2.fill = AGENT
+                //r2.setOpacity(0.4);
+            } else {
+                r2.opacity = 0.0
+            }
+            stack.children.add(r2)
+
+            val tp = Tooltip("R:$row, C:$col, V:${(percentageVisits * 100).toInt()}%")
+            Tooltip.install(stack, tp)
+
+            stack.setOnMouseClicked { value ->
+                val isStartingState = roomCoordinate == maze?.start
+                val isGoalState = roomCoordinate == maze?.goal
+                if (value.isControlDown) {
+                    if (isStartingState || isGoalState) {
+                        popupAlert("Trying to close this room?", "You can't close it!")
+                    } else {
+                        maze?.setRoom(col, row, room.copy(open = !room.open))
+                        resetRoom()
+                    }
+                } else if (value.isShiftDown) {
+                    println("Changing starting state to $roomCoordinate")
+                    maze?.start = roomCoordinate
+                    resetRoom()
+                } else {
+                    println("Changing goal state to $roomCoordinate")
+                    maze?.let { m ->
+                        m.getRoom(m.goal)?.copy(reward = 0.0)?.let { r ->
+                            m.setRoom(m.goal.x, m.goal.y, r)
+                        }
+                        m.goal = roomCoordinate
+                        m.getRoom(m.goal)?.copy(reward = 100.0)?.let { r ->
+                            m.setRoom(m.goal.x, m.goal.y, r)
+                        }
+                    }
+                    resetRoom()
+                }
+            }
+            mazeRoomGrid.add(stack, col, row)
         }
     }
 
-    private fun addRoom(
-        room: Room, maze: QMazeGridController
-    ): StackPane {
-        if (room.coordinate == maze.goalState) {
-            room.reward = 100.0
-        } else {
-            room.reward = 0.0
-        }
-        val columnIndex = room.coordinate.xCoordinate
-        val rowIndex = room.coordinate.yCoordinate
-        val r = Rectangle(50.0, 50.0)
+    private fun initialiseMazeRooms() {
+        val columns = mazeSpinnerColumns.value
+        val rows = mazeSpinnerRows.value
+        maze = Maze(Array2D(columns, rows, Room()))
+    }
 
-        val open = room.open
-        val hasAgent = room.coordinate == maze.agentLocation
-        val percentageVisits = room.percentageVisits
-        val totalVisits = room.visitCount
-        val fillFactor = (percentageVisits + totalVisits) / 2
-        val stack = StackPane()
-        stack.shape = r
-        val p = if (open) {
-            Color.color(1 - fillFactor, 1.0, 1 - fillFactor)
-        } else {
-            Color.DARKGRAY
-        }
-
-        val bf = BackgroundFill(p, null, null)
-        stack.background = Background(bf)
-
-        val r2 = Rectangle(50.0, 50.0)
-
-        if (room.coordinate == maze.goalState) {
-            if (hasAgent) {
-                r2.fill = AGENT_AT_GOAL
-            } else {
-                r2.fill = GOAL
+    private fun getTotalVisitCount(heatMap: Map<Coordinate, Int>): Double {
+        var totalVisits = 0.0
+        for (key in heatMap.keys) {
+            heatMap[key]?.let {
+                totalVisits += it
             }
-            //r2.setOpacity(0.4);
-        } else if (room.coordinate == maze.startingState && !hasAgent) {
-            r2.opacity = 0.0
-            stack.children.add(Label("X"))
-        } else if (hasAgent) {
-            r2.fill = AGENT
-            //r2.setOpacity(0.4);
-        } else {
-            r2.opacity = 0.0
         }
-        stack.children.add(r2)
+        return totalVisits
+    }
 
-        val tp = Tooltip("R:$rowIndex, C:$columnIndex, V:${(percentageVisits * 100).toInt()}%")
-        Tooltip.install(stack, tp)
-
-        stack.setOnMouseClicked { value ->
-            if (value.isControlDown) {
-                if (room.coordinate == maze.startingState || room.coordinate == maze.goalState) {
-                    val alert = Alert(Alert.AlertType.INFORMATION)
-                    alert.title = "Oh dear"
-                    alert.headerText = "Trying to close this room?"
-                    alert.contentText = "You can't close it!"
-                    alert.showAndWait()
-                } else {
-                    room.open = !room.open
-                    redrawMaze()
-                    roomReset()
-                }
-            } else {
-                val options = FXCollections.observableArrayList(SET_START, SET_GOAL)
-                val cd = ChoiceDialog(SET_START, options)
-                cd.title = "Configure Rooms"
-                cd.headerText = "Change the starting or goal room"
-                val result = cd.showAndWait()
-                result.ifPresent { selected ->
-                    val isStartingState = room.coordinate == maze.startingState
-                    val isGoalState = room.coordinate == maze.goalState
-                    if (selected == SET_START && !isGoalState) {
-                        println("Changing starting state to " + room.coordinate)
-                        maze.startingState = room.coordinate
-                        roomReset()
-                    }
-                    if (selected == SET_GOAL && !isStartingState) {
-                        println("Changing goal state to " + room.coordinate)
-                        maze.goalState = room.coordinate
-                        roomReset()
-                    }
+    private fun getHighestVisitCount(heatMap: Map<Coordinate, Int>): Double {
+        var highestVisit = 0
+        for (key in heatMap.keys) {
+            heatMap[key]?.let {
+                if (it > highestVisit) {
+                    highestVisit = it
                 }
             }
         }
-        return stack
+        return highestVisit.toDouble()
+    }
+
+    private fun animateMap(optimalPath: List<Coordinate>) {
+
+        animateAgent(maze?.start)
+
+        println("Finding path")
+        val stepsToGoal = optimalPath.size
+        val interval = getInterval(stepsToGoal)
+        println("Interval is: $interval")
+        var timeMillis: Long = 0
+        for (agentLocation in optimalPath) {
+            val beat =
+                    Timeline(KeyFrame(Duration.millis(timeMillis.toDouble()),
+                            EventHandler<ActionEvent> { animateAgent(agentLocation) }))
+            beat.isAutoReverse = true
+            beat.cycleCount = 1
+            beat.play()
+            timeMillis += interval
+        }
+    }
+
+    private fun animateAgent(roomWithAgent: Coordinate?) {
+        agentLocation = roomWithAgent
+        redrawMaze()
+    }
+
+    private fun getInterval(stepsToGoal: Int): Long {
+
+        println("Steps are: $stepsToGoal")
+        var interval = ANIMATION_INTERVAL
+        //Whole animation should take around 30 seconds or less. If there are more than 6000
+        // steps, which is highly unlikely, but anyway, don't bother because the
+        // human eye wont see it (and your laptop has probably died by now).
+        if (stepsToGoal > 6000) {
+            throw RuntimeException("Too many steps to display")
+        }
+        if (stepsToGoal > 30) {
+            //So if we have more than 60 steps to the optimal path,
+            // then we want the interval to be smaller to accomodate this
+            val millisAvailable = (30 * 1000).toLong()
+            interval = millisAvailable / stepsToGoal.toLong()
+        }
+        return interval
     }
 
 }

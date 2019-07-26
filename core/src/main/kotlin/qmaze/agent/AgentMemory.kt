@@ -6,7 +6,7 @@ import java.util.HashMap
 
 /**
  * @author katharine
- * The Agent learns as it moves through the maze:
+ * The Agent learns as it moves through the mazeController:
  * - What room am I in? Co-ordinates.
  * - Is there a reward for moving into this room?
  * Then it can recall:
@@ -20,41 +20,34 @@ import java.util.HashMap
  */
 class AgentMemory {
 
-    private val mazeMemory: MutableMap<Coordinate, Map<Coordinate, Double>>
+    private val mazeMemory: MutableMap<Coordinate, Map<Coordinate, Double>> = HashMap()
     var currentState: Coordinate? = null
-
-    init {
-        mazeMemory = HashMap()
-    }
 
     fun setStartingState(startingState: Coordinate) {
         this.currentState = startingState
     }
 
-    /*
-     * TO DO: code me!
-     * For hints on the steps I need to take, see hints.txt
-     */
     fun updateMemory(action: Coordinate, reward: Double) {
         val nextSteps = mazeMemory[currentState].orEmpty().toMutableMap()
         val rewardMemory = nextSteps[action] ?: 0.0
 
         nextSteps[action] = rewardMemory + reward
-        this.mazeMemory[currentState!!] = nextSteps
+        mazeMemory[currentState!!] = nextSteps
     }
 
     fun move(action: Coordinate) {
-        this.currentState = action
+        currentState = action
     }
 
     //What do I remember about future actions>
-    fun actionsForState(state: Coordinate): ArrayList<Coordinate> {
-        val nextSteps = mazeMemory[state] ?: return ArrayList()
-        return ArrayList(nextSteps.keys)
+    fun actionsForState(state: Coordinate): List<Coordinate> {
+        val nextSteps = mazeMemory[state].orEmpty()
+        return nextSteps.keys.toList()
     }
 
     fun rewardFromAction(state: Coordinate?, action: Coordinate): Double {
         //Nope, no memory of next steps or moving into this room.
         return mazeMemory[state]?.get(action) ?: return 0.0
     }
+
 }
