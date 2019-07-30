@@ -8,7 +8,7 @@ plugins {
     id("org.beryx.jlink") version "2.10.2"
 }
 
-group = "qmaze"
+group = "qmaze.app"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -24,6 +24,7 @@ val kotlinVersion = "1.3.41"
 val tornadofxVersion = "1.7.15"
 
 dependencies {
+    implementation(project(":core"))
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("no.tornado:tornadofx:$tornadofxVersion")
