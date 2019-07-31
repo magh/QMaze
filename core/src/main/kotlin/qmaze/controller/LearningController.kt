@@ -1,6 +1,12 @@
 package qmaze.controller
 
 import qmaze.agent.Agent
+import qmaze.agent.MazeMemory
+import qmaze.agent.MutableMazeMemory
+import qmaze.controller.LearningController.Direction.DOWN
+import qmaze.controller.LearningController.Direction.LEFT
+import qmaze.controller.LearningController.Direction.RIGHT
+import qmaze.controller.LearningController.Direction.UP
 import qmaze.environment.Coordinate
 import qmaze.environment.Maze
 import java.util.ArrayList
@@ -23,6 +29,10 @@ private const val EXCEPTION_THRESHOLD = 20
  * I pass information from the model to the view.
  */
 class LearningController(private val maze: Maze, private val mazeConfig: TrainingConfig) {
+
+    enum class Direction(val arrow: String, val desc: String) {
+        UP("^", "up"), DOWN("v", "down"), LEFT("<", "left"), RIGHT(">", "right")
+    }
 
     private val agent = Agent(mazeConfig.epsilon, mazeConfig.alpha, mazeConfig.gamma)
 
@@ -75,8 +85,8 @@ class LearningController(private val maze: Maze, private val mazeConfig: Trainin
         return optimalPath
     }
 
-    fun getLearnings(): Map<Coordinate, Map<Coordinate, Double>> {
-        val learnings = HashMap<Coordinate, Map<Coordinate, Double>>()
+    fun getLearnings(): MazeMemory {
+        val learnings: MutableMazeMemory = HashMap()
         agent.memory.let { memory ->
             for (y in 0 until maze.getYSize()) {
                 for (x in 0 until maze.getXSize()) {
@@ -97,4 +107,21 @@ class LearningController(private val maze: Maze, private val mazeConfig: Trainin
         return learnings
     }
 
+}
+
+fun getArrowDescDirection(currentRoom: Coordinate, nextRoom: Coordinate): LearningController.Direction {
+    val currentRow = currentRoom.y
+    val currentColumn = currentRoom.x
+    val nextRow = nextRoom.y
+    val nextColumn = nextRoom.x
+    if (currentRow == nextRow && currentColumn > nextColumn) {
+        return LEFT
+    } else if (currentRow == nextRow && currentColumn < nextColumn) {
+        return RIGHT
+    } else if (currentRow > nextRow && currentColumn == nextColumn) {
+        return UP
+    } else if (currentRow < nextRow && currentColumn == nextColumn) {
+        return DOWN
+    }
+    throw RuntimeException("Unknown direction ${currentRoom} ${nextRoom}")
 }

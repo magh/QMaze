@@ -5,6 +5,8 @@
  */
 package qmaze.environment
 
+import java.util.ArrayList
+
 /**
  * @author katharine
  * A Room knows:
@@ -18,13 +20,27 @@ package qmaze.environment
  */
 data class Room(val open: Boolean = true, val reward: Double = 0.0)
 
-fun adjoins(theRoom: Coordinate, otherRoom: Coordinate): Boolean {
-    val x_other = otherRoom.x
-    val y_other = otherRoom.y
-    val x_coordinate = theRoom.x
-    val y_coordinate = theRoom.y
-    return (x_other == x_coordinate && y_other == y_coordinate - 1
-            || x_other == x_coordinate && y_other == y_coordinate + 1
-            || y_other == y_coordinate && x_other == x_coordinate - 1
-            || y_other == y_coordinate && x_other == x_coordinate + 1)
+fun getAdjoiningRooms(state: Coordinate, rooms: Array2D<Room>): List<Coordinate> {
+    val adjoiningRooms = ArrayList<Coordinate>()
+    for (y in 0 until rooms.ySize) {
+        for (x in 0 until rooms.xSize) {
+            val c = Coordinate(x, y)
+            val otherRoom = rooms.get(x, y)
+            if (otherRoom.open && adjoins(state, c)) {
+                adjoiningRooms.add(c)
+            }
+        }
+    }
+    return adjoiningRooms
+}
+
+private fun adjoins(theRoom: Coordinate, otherRoom: Coordinate): Boolean {
+    val xOther = otherRoom.x
+    val yOther = otherRoom.y
+    val xCoordinate = theRoom.x
+    val yCoordinate = theRoom.y
+    return (xOther == xCoordinate && yOther == yCoordinate - 1
+            || xOther == xCoordinate && yOther == yCoordinate + 1
+            || yOther == yCoordinate && xOther == xCoordinate - 1
+            || yOther == yCoordinate && xOther == xCoordinate + 1)
 }

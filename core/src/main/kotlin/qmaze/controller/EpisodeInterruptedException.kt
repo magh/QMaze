@@ -6,7 +6,7 @@ package qmaze.controller
  */
 class EpisodeInterruptedException : Exception {
 
-    constructor(e: Exception, step: Int) : super("Episode interrupted at step ${step} due to ${e.message}") {}
+    constructor(e: Exception, step: Int) : super("Episode interrupted at step ${step} due to ${e.message}")
 
-    constructor(message: String, step: Int) : super("Episode interrupted at step ${step} due to $message") {}
+    constructor(message: String, step: Int) : super("Episode interrupted at step ${step} due to $message")
 }

@@ -9,7 +9,11 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.scene.control.Label
 import javafx.scene.control.Tooltip
-import javafx.scene.layout.*
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.GridPane
+import javafx.scene.layout.Pane
+import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
@@ -17,13 +21,17 @@ import javafx.util.Duration
 import qmaze.controller.LearningController
 import qmaze.controller.TrainingConfig
 import qmaze.controller.TrainingInterruptedException
+import qmaze.controller.getArrowDescDirection
 import qmaze.environment.Array2D
 import qmaze.environment.Coordinate
 import qmaze.environment.Maze
 import qmaze.environment.Room
-import qmaze.view.ViewController.ControllerState.*
+import qmaze.view.ViewController.ControllerState.ADJUST_MAZE_STATE
+import qmaze.view.ViewController.ControllerState.ADJUST_PARAM_STATE
+import qmaze.view.ViewController.ControllerState.RESET_STATE
+import qmaze.view.ViewController.ControllerState.TRAINED_STATE
 import tornadofx.clear
-import java.util.*
+import java.util.HashMap
 
 const val initialGamma = 0.7
 const val initialEpsilon = 0.1
@@ -138,14 +146,14 @@ class ViewController {
                     textPane.style = "-fx-background-color: #f2f9ef"
                 }
                 else -> for (entry in actions.entries) {
-                    val (arrow, desc) = getArrowDescDirection(roomCoordinate, entry.key)
-                    val qValueForText = String.format("%.2f", entry.value)
+                    val direction = getArrowDescDirection(roomCoordinate, entry.key)
+                    val qValueForText = "%.2f".format(entry.value)
                     sb.append(qValueForText)
-                    sb.append(arrow)
+                    sb.append(" ${direction.arrow} ")
                     sb.append("\n")
                     textPane.style = "-fx-background-color: #ffffff"
-                    val qValueForToolTip = String.format("%.4f", entry.value)
-                    toolTipText += "Moving $desc for $qValueForToolTip\n"
+                    val qValueForToolTip = "%.4f".format(entry.value)
+                    toolTipText += "Moving ${direction.desc} for $qValueForToolTip\n"
                 }
             }
             val t = Text(sb.toString())
@@ -159,23 +167,6 @@ class ViewController {
 
             qTableGrid.add(textPane, it.key.x, it.key.y)
         }
-    }
-
-    private fun getArrowDescDirection(currentRoom: Coordinate, nextRoom: Coordinate): Pair<String, String> {
-        val currentRow = currentRoom.y
-        val currentColumn = currentRoom.x
-        val nextRow = nextRoom.y
-        val nextColumn = nextRoom.x
-        if (currentRow == nextRow && currentColumn > nextColumn) {
-            return Pair(" <- ", "left")
-        } else if (currentRow == nextRow && currentColumn < nextColumn) {
-            return Pair(" -> ", "right")
-        } else if (currentRow > nextRow && currentColumn == nextColumn) {
-            return Pair(" ^ ", "up")
-        } else if (currentRow < nextRow && currentColumn == nextColumn) {
-            return Pair(" v ", "down")
-        }
-        return Pair(nextRoom.toString(), nextRoom.toString())
     }
 
     fun startTraining() {

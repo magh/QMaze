@@ -7,29 +7,31 @@ import qmaze.environment.Maze
 /**
  * @author katharine
  */
-class OptimalEpisode(agent: Agent, maze: Maze) : Episode(agent, maze) {
+class OptimalEpisode(private val agent: Agent, private val maze: Maze) {
 
-    @Throws(EpisodeInterruptedException::class)
+    private val episode: Episode = Episode(agent, maze)
+
     fun findOptimalPath(): List<Coordinate> {
-        val originalEpsilon = agent.epsilon
-        haltExploration()
+        val originalEpsilon = haltExploration()
 
         agent.start(maze.start)
-        episodeSteps.add(maze.start)
-        while (!atGoalState()) {
-            val action = nextAction()
+        episode.episodeSteps.add(maze.start)
+        while (!episode.atGoalState()) {
+            val action = episode.nextAction()
             agent.move(action)
-            recordSteps(action)
+            episode.recordSteps(action)
             println("Moved to $action")
         }
-        println("Found optimalPath in " + episodeSteps.size + " steps.")
+        println("Found optimalPath in ${episode.episodeSteps.size} steps.")
 
         resumeExploration(originalEpsilon)
-        return episodeSteps
+        return episode.episodeSteps
     }
 
-    private fun haltExploration() {
+    private fun haltExploration(): Double {
+        val originalEpsilon = agent.epsilon
         agent.epsilon = 0.0
+        return originalEpsilon
     }
 
     private fun resumeExploration(epsilon: Double) {

@@ -1,44 +1,29 @@
 package qmaze.controller
 
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
-import org.junit.Assert.*
 import qmaze.environment.Array2D
+import qmaze.environment.Coordinate
 import qmaze.environment.Maze
 import qmaze.environment.Room
+import qmaze.util.printHeatMap
+import qmaze.util.printLearnings
+import qmaze.util.printOptimalPath
 
 class LearningControllerTest {
 
-    @Before
-    fun setUp() {
-    }
-
-    @After
-    fun tearDown() {
-    }
-
     @Test
-    fun getHeatMap() {
-        val rooms = Array2D<Room>(4, 4, Room())
+    fun testLearning() {
+        val xSize = 4
+        val ySize = 4
+        val rooms = Array2D(xSize, ySize, Room())
         val maze = Maze(rooms)
         val trainingConfig = TrainingConfig(50, 0.7, 0.1, 0.1)
         val lc = LearningController(maze, trainingConfig)
         val heatMap = lc.startLearning()
-        println(heatMap)
-        println(lc.getLearnings())
+        printHeatMap(xSize, ySize, heatMap)
+        printLearnings(xSize, ySize, lc.getLearnings())
+        printOptimalPath(lc.getOptimalPath())
     }
 
-    @Test
-    fun startLearning() {
-    }
-
-    @Test
-    fun getOptimalPath() {
-    }
-
-    @Test
-    fun getLearnings() {
-    }
 }

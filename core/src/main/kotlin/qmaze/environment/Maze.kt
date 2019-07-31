@@ -21,9 +21,11 @@ import java.util.ArrayList
  * COLUMN IS X
  * ROW IS Y
  */
-class Maze(private val rooms: Array2D<Room>,
-           var start: Coordinate = Coordinate(0, 0),
-           var goal: Coordinate = Coordinate(rooms.xSize - 1, rooms.ySize - 1)) {
+class Maze(
+    val rooms: Array2D<Room>,
+    var start: Coordinate = Coordinate(0, 0),
+    var goal: Coordinate = Coordinate(rooms.xSize - 1, rooms.ySize - 1)
+) {
 
     init {
         //TODO fix
@@ -40,7 +42,7 @@ class Maze(private val rooms: Array2D<Room>,
         rooms.set(x, y, room)
     }
 
-    fun forEach(block: (x: Int, y: Int, room: Room) -> Unit){
+    fun forEach(block: (x: Int, y: Int, room: Room) -> Unit) {
         rooms.forEach(block)
     }
 
@@ -50,20 +52,6 @@ class Maze(private val rooms: Array2D<Room>,
 
     fun getYSize(): Int {
         return rooms.ySize
-    }
-
-    fun getAdjoiningStates(state: Coordinate): List<Coordinate> {
-        val adjoiningRooms = ArrayList<Coordinate>()
-        for (y in 0 until rooms.ySize) {
-            for (x in 0 until rooms.xSize) {
-                val c = Coordinate(x, y)
-                val otherRoom = rooms.get(x, y)
-                if (otherRoom.open && adjoins(state, c)) {
-                    adjoiningRooms.add(c)
-                }
-            }
-        }
-        return adjoiningRooms
     }
 
 }

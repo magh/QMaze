@@ -37,36 +37,33 @@ class Agent(var epsilon: Double, private val learningRate: Double, private val g
         memory.move(nextState)
     }
 
-    @Throws(NoWhereToGoException::class)
     fun chooseAction(nextAvailableActions: List<Coordinate>): Coordinate {
         if (nextAvailableActions.isEmpty()) {
             throw NoWhereToGoException(memory.currentState!!)
+        }
+        return if (Math.random() < epsilon) {
+            pickRandomAction(nextAvailableActions)
         } else {
-            return if (Math.random() < epsilon) {
-                pickRandomAction(nextAvailableActions)
-            } else {
-                pickBestActionOrRandom(nextAvailableActions)
-            }
+            pickBestActionOrRandom(nextAvailableActions)
         }
     }
 
     fun takeAction(actionTaken: Coordinate, reward: Double) {
         val currentQValue = memory.rewardFromAction(memory.currentState, actionTaken)
         var estimatedBestFutureReward = 0.0
-        val actionsForFutureState = this.memory.actionsForState(actionTaken)
+        val actionsForFutureState = memory.actionsForState(actionTaken)
         if (actionsForFutureState.isNotEmpty()) {
-            val maxRewardFromSubequentAction = this.pickBestActionOrRandom(actionsForFutureState)
-            estimatedBestFutureReward = this.memory.rewardFromAction(actionTaken, maxRewardFromSubequentAction)
+            val maxRewardFromSubequentAction = pickBestActionOrRandom(actionsForFutureState)
+            estimatedBestFutureReward = memory.rewardFromAction(actionTaken, maxRewardFromSubequentAction)
         }
 
         val qValue = learningRate * (reward + gamma * estimatedBestFutureReward - currentQValue)
-        this.memory.updateMemory(actionTaken, qValue)
-        this.memory.move(actionTaken)
+        memory.updateMemory(actionTaken, qValue)
+        memory.move(actionTaken)
     }
 
     private fun pickRandomAction(actions: List<Coordinate>): Coordinate {
-        val options = actions.size
-        val choice = (Math.random() * options.toDouble()).toInt()
+        val choice = (Math.random() * actions.size.toDouble()).toInt()
         return actions[choice]
     }
 
@@ -75,7 +72,7 @@ class Agent(var epsilon: Double, private val learningRate: Double, private val g
         var highestReward = 0.0
 
         for (action in actions) {
-            val rewardMemory = this.memory.rewardFromAction(this.location(), action)
+            val rewardMemory = memory.rewardFromAction(location(), action)
             if (rewardMemory > highestReward) {
                 highestReward = rewardMemory
                 bestActions = ArrayList()
@@ -86,8 +83,7 @@ class Agent(var epsilon: Double, private val learningRate: Double, private val g
                 bestActions.add(action)
             }
         }
-
-        return this.pickRandomAction(bestActions)
+        return pickRandomAction(bestActions)
     }
 
     fun introduceSelf(startingState: Coordinate) {

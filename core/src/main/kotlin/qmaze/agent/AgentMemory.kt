@@ -1,7 +1,6 @@
 package qmaze.agent
 
 import qmaze.environment.Coordinate
-import java.util.ArrayList
 import java.util.HashMap
 
 /**
@@ -13,14 +12,14 @@ import java.util.HashMap
  * - What was the reward for moving into this room?
  * - What are the best rooms I remember, the next step on?
  *
- *
  * Have to: initialise class
  * then set starting state before anything else can happen.
  * Why not do this in the constructor? We use the memory for multiple episodes.
  */
 class AgentMemory {
 
-    private val mazeMemory: MutableMap<Coordinate, Map<Coordinate, Double>> = HashMap()
+    private val mazeMemory: MutableMazeMemory = HashMap()
+
     var currentState: Coordinate? = null
 
     fun setStartingState(startingState: Coordinate) {
@@ -47,7 +46,11 @@ class AgentMemory {
 
     fun rewardFromAction(state: Coordinate?, action: Coordinate): Double {
         //Nope, no memory of next steps or moving into this room.
-        return mazeMemory[state]?.get(action) ?: return 0.0
+        return mazeMemory[state]?.get(action) ?: 0.0
     }
 
 }
+
+typealias MazeMemory = Map<Coordinate, Map<Coordinate, Double>>
+
+typealias MutableMazeMemory = MutableMap<Coordinate, Map<Coordinate, Double>>
