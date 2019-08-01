@@ -1,7 +1,5 @@
 package qmaze.environment
 
-import java.util.ArrayList
-
 /**
  * TODO: consistently do x,y or coordinate
  * @author katharine

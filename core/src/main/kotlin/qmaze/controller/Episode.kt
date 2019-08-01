@@ -23,18 +23,15 @@ class Episode(val agent: Agent, val maze: Maze) {
     //Decide on action
     fun nextAction(): Coordinate {
         try {
-            agent.location()?.let { loc ->
-                val adjoiningRooms = getAdjoiningRooms(loc, maze.rooms)
-                return agent.chooseAction(adjoiningRooms)
-            }
-            throw EpisodeInterruptedException("Location not found", episodeSteps.size)
+            val adjoiningRooms = getAdjoiningRooms(agent.location(), maze.rooms)
+            return agent.chooseAction(adjoiningRooms)
         } catch (e: NoWhereToGoException) {
             throw EpisodeInterruptedException(e, episodeSteps.size)
         }
     }
 
     fun play() {
-        agent.start(maze.start)
+        agent.memory.move(maze.start)
         episodeSteps.add(maze.start)
         while (!atGoalState()) {
             val action = nextAction()
@@ -56,9 +53,7 @@ class Episode(val agent: Agent, val maze: Maze) {
     }
 
     fun atGoalState(): Boolean {
-        return agent.location()?.let {
-            maze.goal == it
-        } ?: false
+        return agent.location() == maze.goal
     }
 
 }

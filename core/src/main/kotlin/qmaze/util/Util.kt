@@ -24,9 +24,9 @@ fun printLearnings(
             val map = learnings[currentRoom]
             print("|")
             map?.forEach {
-                val direction = getArrowDescDirection(currentRoom, it.key)
                 if (it.value > 0.0) {
-                    print("${direction.arrow}(${"%.4f".format(it.value)})")
+                    val arrowDesc = getArrowDescDirection(currentRoom, it.key)
+                    print("${arrowDesc.arrow}(${"%.4f".format(it.value)})")
                 }
                 print(" ")
             }

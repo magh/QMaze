@@ -22,7 +22,7 @@ class EpisodeTest {
         val maze_size = 4
         val start = Coordinate(0, 0)
         val goalState = Coordinate(maze_size - 1, maze_size - 1)
-        val agent = Agent(0.1, 0.1, 0.1)
+        val agent = Agent(start, 0.1, 0.1, 0.1)
         val rooms = Array2D<Room>(maze_size, maze_size, Room())
         val maze = Maze(rooms, start, goalState)
         val ep = Episode(agent, maze)

@@ -16,10 +16,8 @@ class AgentTest {
      */
     @Test
     fun testStart() {
-        println("start")
         val startingState = Coordinate(0, 0)
-        val agent = Agent(0.1, 0.1, 0.7)
-        agent.start(startingState)
+        val agent = Agent(startingState, 0.1, 0.1, 0.7)
         assertEquals(startingState, agent.location())
     }
 
@@ -27,14 +25,12 @@ class AgentTest {
      * Test of chooseAction method, of class Agent.
      */
     @Test
-    @Throws(Exception::class)
     fun testChooseActionWhenOnlyOne() {
-        println("chooseAction")
+        val startingState = Coordinate(0, 0)
         val nextAction = Coordinate(1, 0)
         val nextAvailableActions = ArrayList<Coordinate>()
         nextAvailableActions.add(nextAction)
-        val agent = Agent(0.1, 0.1, 0.7)
-        agent.start(Coordinate(0, 0))
+        val agent = Agent(startingState, 0.1, 0.1, 0.7)
         val result = agent.chooseAction(nextAvailableActions)
         assertEquals(nextAction, result)
     }
@@ -43,16 +39,14 @@ class AgentTest {
      * Test of chooseAction method, of class Agent.
      */
     @Test
-    @Throws(Exception::class)
     fun testChooseActionWhenTwo() {
-
+        val startingState = Coordinate(0, 0)
         val nextAction1 = Coordinate(1, 0)
         val nextAction2 = Coordinate(0, 1)
         val nextAvailableActions = ArrayList<Coordinate>()
         nextAvailableActions.add(nextAction1)
         nextAvailableActions.add(nextAction2)
-        val agent = Agent(0.1, 0.1, 0.7)
-        agent.start(Coordinate(0, 0))
+        val agent = Agent(startingState, 0.1, 0.1, 0.7)
         val result = agent.chooseAction(nextAvailableActions)
         assertTrue(result == nextAction1 || result == nextAction2)
     }
@@ -73,8 +67,7 @@ class AgentTest {
         val stateTwo = Coordinate(1, 0)
         val goalState = Coordinate(1, 1)
 
-        val agent = Agent(0.1, 0.1, 0.7)
-        agent.start(startingState)
+        val agent = Agent(startingState, 0.1, 0.1, 0.7)
 
         //Going SS -> S1 -> GS
         agent.takeAction(stateOne, 0.0)
@@ -87,7 +80,7 @@ class AgentTest {
         assertEquals(10.0, agent.memory.rewardFromAction(stateOne, goalState), 0.0)
 
         //Going SS -> S2 -> GS
-        agent.start(startingState)
+        agent.memory.move(startingState)
         agent.takeAction(stateTwo, 0.0)
         assertEquals(stateTwo, agent.location())
         agent.takeAction(goalState, 100.0)
@@ -96,11 +89,12 @@ class AgentTest {
         agent.memory.move(startingState)
         assertEquals(0.0, agent.memory.rewardFromAction(startingState, stateTwo), 0.0)
         assertEquals(0.0, agent.memory.rewardFromAction(startingState, stateOne), 0.0)
+
         agent.memory.move(stateTwo)
         assertEquals(10.0, agent.memory.rewardFromAction(stateTwo, goalState), 0.0)
 
         //Then SS -> S1 -> GS
-        agent.start(startingState)
+        agent.memory.move(startingState)
         agent.takeAction(stateOne, 0.0)
         assertEquals(stateOne, agent.location())
         agent.takeAction(goalState, 100.0)
@@ -110,7 +104,7 @@ class AgentTest {
         assertEquals(19.0, agent.memory.rewardFromAction(stateOne, goalState), 0.0)
 
         //Then SS -> S2 -> GS
-        agent.start(startingState)
+        agent.memory.move(startingState)
         agent.takeAction(stateTwo, 0.0)
         assertEquals(stateTwo, agent.location())
         agent.takeAction(goalState, 100.0)

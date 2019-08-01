@@ -16,22 +16,19 @@ import java.util.HashMap
  * then set starting state before anything else can happen.
  * Why not do this in the constructor? We use the memory for multiple episodes.
  */
-class AgentMemory {
+class AgentMemory(var currentState: Coordinate) {
 
     private val mazeMemory: MutableMazeMemory = HashMap()
 
-    var currentState: Coordinate? = null
-
-    fun setStartingState(startingState: Coordinate) {
-        this.currentState = startingState
-    }
-
     fun updateMemory(action: Coordinate, reward: Double) {
+        // get possible actions
         val nextSteps = mazeMemory[currentState].orEmpty().toMutableMap()
+        // get current reward for action
         val rewardMemory = nextSteps[action] ?: 0.0
-
+        // increase reward for action
         nextSteps[action] = rewardMemory + reward
-        mazeMemory[currentState!!] = nextSteps
+        // update memory
+        mazeMemory[currentState] = nextSteps
     }
 
     fun move(action: Coordinate) {
@@ -44,7 +41,7 @@ class AgentMemory {
         return nextSteps.keys.toList()
     }
 
-    fun rewardFromAction(state: Coordinate?, action: Coordinate): Double {
+    fun rewardFromAction(state: Coordinate, action: Coordinate): Double {
         //Nope, no memory of next steps or moving into this room.
         return mazeMemory[state]?.get(action) ?: 0.0
     }

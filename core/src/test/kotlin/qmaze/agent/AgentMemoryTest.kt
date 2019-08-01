@@ -22,8 +22,7 @@ class AgentMemoryTest {
         val anotherState = Coordinate(1, 0)
 
         val reward = 0
-        val memory = AgentMemory()
-        memory.setStartingState(currentState)
+        val memory = AgentMemory(currentState)
         //Update memory when there is none
 
         memory.updateMemory(nextState, reward.toDouble())
@@ -65,8 +64,7 @@ class AgentMemoryTest {
         val goalState = Coordinate(1, 0)
 
         //SS : S1,0
-        val memory = AgentMemory()
-        memory.setStartingState(startingState)
+        val memory = AgentMemory(startingState)
         var actionsFromStartingState = memory.actionsForState(startingState)
         assertTrue(actionsFromStartingState.isEmpty())
         memory.updateMemory(stateOne, 0.0)

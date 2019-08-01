@@ -1,7 +1,6 @@
 package qmaze.agent
 
 import qmaze.environment.Coordinate
-
 import java.util.ArrayList
 
 /**
@@ -21,25 +20,17 @@ import java.util.ArrayList
  * - My movements overall - instead I am told to move at each step
  * and given information about the environment.
  */
-class Agent(var epsilon: Double, private val learningRate: Double, private val gamma: Double) {
+class Agent(startingState: Coordinate, var epsilon: Double, private val learningRate: Double, private val gamma: Double) {
 
-    val memory: AgentMemory = AgentMemory()
+    val memory: AgentMemory = AgentMemory(startingState)
 
-    fun location(): Coordinate? {
+    fun location(): Coordinate {
         return memory.currentState
-    }
-
-    fun start(startingState: Coordinate) {
-        memory.setStartingState(startingState)
-    }
-
-    fun move(nextState: Coordinate) {
-        memory.move(nextState)
     }
 
     fun chooseAction(nextAvailableActions: List<Coordinate>): Coordinate {
         if (nextAvailableActions.isEmpty()) {
-            throw NoWhereToGoException(memory.currentState!!)
+            throw NoWhereToGoException(location())
         }
         return if (Math.random() < epsilon) {
             pickRandomAction(nextAvailableActions)
@@ -49,7 +40,9 @@ class Agent(var epsilon: Double, private val learningRate: Double, private val g
     }
 
     fun takeAction(actionTaken: Coordinate, reward: Double) {
-        val currentQValue = memory.rewardFromAction(memory.currentState, actionTaken)
+        val currentQValue = memory.rewardFromAction(location(), actionTaken)
+
+        // two step reward calc
         var estimatedBestFutureReward = 0.0
         val actionsForFutureState = memory.actionsForState(actionTaken)
         if (actionsForFutureState.isNotEmpty()) {

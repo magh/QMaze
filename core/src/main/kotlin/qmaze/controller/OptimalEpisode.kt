@@ -14,11 +14,11 @@ class OptimalEpisode(private val agent: Agent, private val maze: Maze) {
     fun findOptimalPath(): List<Coordinate> {
         val originalEpsilon = haltExploration()
 
-        agent.start(maze.start)
+        agent.memory.move(maze.start)
         episode.episodeSteps.add(maze.start)
         while (!episode.atGoalState()) {
             val action = episode.nextAction()
-            agent.move(action)
+            agent.memory.move(action)
             episode.recordSteps(action)
             println("Moved to $action")
         }

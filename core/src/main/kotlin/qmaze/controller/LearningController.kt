@@ -31,10 +31,13 @@ private const val EXCEPTION_THRESHOLD = 20
 class LearningController(private val maze: Maze, private val mazeConfig: TrainingConfig) {
 
     enum class Direction(val arrow: String, val desc: String) {
-        UP("^", "up"), DOWN("v", "down"), LEFT("<", "left"), RIGHT(">", "right")
+        UP("^", "up" ),
+        DOWN("v", "down"),
+        LEFT("<", "left"),
+        RIGHT(">", "right")
     }
 
-    private val agent = Agent(mazeConfig.epsilon, mazeConfig.alpha, mazeConfig.gamma)
+    private val agent = Agent(maze.start, mazeConfig.epsilon, mazeConfig.alpha, mazeConfig.gamma)
 
     init {
         agent.introduceSelf(maze.start)
