@@ -20,9 +20,24 @@ import java.util.ArrayList
  * - My movements overall - instead I am told to move at each step
  * and given information about the environment.
  */
-class Agent(startingState: Coordinate, var epsilon: Double, private val learningRate: Double, private val gamma: Double) {
+class Agent(
+    startingState: Coordinate,
+    private var probabilityExplore: Double,
+    private val learningRate: Double,
+    private val rewardDiscount: Double
+) {
 
     val memory: AgentMemory = AgentMemory(startingState)
+
+    fun haltExploring(): Double {
+        val originalEpsilon = probabilityExplore
+        probabilityExplore = 0.0
+        return originalEpsilon
+    }
+
+    fun resumeExploring(originalEpsilon: Double){
+        this.probabilityExplore = originalEpsilon
+    }
 
     fun location(): Coordinate {
         return memory.currentState
@@ -32,7 +47,7 @@ class Agent(startingState: Coordinate, var epsilon: Double, private val learning
         if (nextAvailableActions.isEmpty()) {
             throw NoWhereToGoException(location())
         }
-        return if (Math.random() < epsilon) {
+        return if (Math.random() < probabilityExplore) {
             pickRandomAction(nextAvailableActions)
         } else {
             pickBestActionOrRandom(nextAvailableActions)
@@ -50,7 +65,7 @@ class Agent(startingState: Coordinate, var epsilon: Double, private val learning
             estimatedBestFutureReward = memory.rewardFromAction(actionTaken, maxRewardFromSubequentAction)
         }
 
-        val qValue = learningRate * (reward + gamma * estimatedBestFutureReward - currentQValue)
+        val qValue = learningRate * (reward + rewardDiscount * estimatedBestFutureReward - currentQValue)
         memory.updateMemory(actionTaken, qValue)
         memory.move(actionTaken)
     }
@@ -80,7 +95,9 @@ class Agent(startingState: Coordinate, var epsilon: Double, private val learning
     }
 
     fun introduceSelf(startingState: Coordinate) {
-        println("I'm training with epsilon: $epsilon gamma: $gamma and alpha: $learningRate\nStaring at $startingState")
+        println("I'm training with probabilityExplore: $probabilityExplore rewardDiscount: $rewardDiscount and learningRate: $learningRate\nStaring at $startingState")
     }
 
 }
+
+class NoWhereToGoException(state: Coordinate) : Exception("I have no-where to go from here: $state")

@@ -1,4 +1,4 @@
-package qmaze.util
+package qmaze
 
 import qmaze.agent.MazeMemory
 import qmaze.controller.getArrowDescDirection
@@ -35,9 +35,9 @@ fun printLearnings(
     }
 }
 
-fun printOptimalPath(optimalPath: List<Coordinate>) {
+fun printPath(path: List<Coordinate>) {
     var old: Coordinate? = null
-    optimalPath.forEach { c ->
+    path.forEach { c ->
         with(old) {
             if (this != null) {
                 println(getArrowDescDirection(this, c))
@@ -47,4 +47,5 @@ fun printOptimalPath(optimalPath: List<Coordinate>) {
         }
         old = c
     }
+    println("END")
 }

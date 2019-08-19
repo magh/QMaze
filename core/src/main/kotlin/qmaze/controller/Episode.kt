@@ -32,7 +32,7 @@ class Episode(val agent: Agent, val maze: Maze) {
 
     fun play() {
         agent.memory.move(maze.start)
-        episodeSteps.add(maze.start)
+        recordSteps(maze.start)
         while (!atGoalState()) {
             val action = nextAction()
 
@@ -56,4 +56,11 @@ class Episode(val agent: Agent, val maze: Maze) {
         return agent.location() == maze.goal
     }
 
+}
+
+class EpisodeInterruptedException : Exception {
+
+    constructor(e: Exception, step: Int) : super("Episode interrupted at step ${step} due to ${e.message}")
+
+    constructor(message: String, step: Int) : super("Episode interrupted at step ${step} due to ${message}")
 }

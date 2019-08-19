@@ -6,10 +6,11 @@ import qmaze.environment.Array2D
 import qmaze.environment.Coordinate
 import qmaze.environment.Maze
 import qmaze.environment.Room
+import qmaze.printPath
 
 /**
  * @author katharine
- * This is really just hear so I can debug it and test manually.
+ * This is really just here so I can debug it and test manually.
  */
 class EpisodeTest {
 
@@ -28,6 +29,9 @@ class EpisodeTest {
         val ep = Episode(agent, maze)
         //test
         ep.play()
+        // verify
+        val steps = ep.episodeSteps
+        printPath(steps)
     }
 
 }

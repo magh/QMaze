@@ -3,14 +3,10 @@ package qmaze.controller
 import qmaze.agent.Agent
 import qmaze.agent.MazeMemory
 import qmaze.agent.MutableMazeMemory
-import qmaze.controller.LearningController.Direction.DOWN
-import qmaze.controller.LearningController.Direction.LEFT
-import qmaze.controller.LearningController.Direction.RIGHT
-import qmaze.controller.LearningController.Direction.UP
+import qmaze.controller.LearningController.Direction.*
 import qmaze.environment.Coordinate
 import qmaze.environment.Maze
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
 
 private const val EXCEPTION_THRESHOLD = 20
 
@@ -28,7 +24,7 @@ private const val EXCEPTION_THRESHOLD = 20
  * - Journey data
  * I pass information from the model to the view.
  */
-class LearningController(private val maze: Maze, private val mazeConfig: TrainingConfig) {
+class LearningController(private val maze: Maze, private val episodes: Int, mazeConfig: TrainingConfig) {
 
     enum class Direction(val arrow: String, val desc: String) {
         UP("^", "up" ),
@@ -37,17 +33,14 @@ class LearningController(private val maze: Maze, private val mazeConfig: Trainin
         RIGHT(">", "right")
     }
 
-    private val agent = Agent(maze.start, mazeConfig.epsilon, mazeConfig.alpha, mazeConfig.gamma)
+    private val agent = Agent(maze.start, mazeConfig.probabilityExplore, mazeConfig.learningRate, mazeConfig.rewardDiscount)
 
     init {
         agent.introduceSelf(maze.start)
     }
 
-    @Throws(TrainingInterruptedException::class)
     fun startLearning(): Map<Coordinate, Int> {
         var exceptionCount = 0
-
-        val episodes = mazeConfig.episodes
 
         val heatMap = HashMap<Coordinate, Int>()
 
@@ -78,14 +71,23 @@ class LearningController(private val maze: Maze, private val mazeConfig: Trainin
     }
 
     fun getOptimalPath(): List<Coordinate> {
-        val e = OptimalEpisode(agent, maze)
-        var optimalPath: List<Coordinate> = ArrayList()
-        try {
-            optimalPath = e.findOptimalPath()
-        } catch (ex: EpisodeInterruptedException) {
-            println(ex.message)
+        val originalEpsilon = agent.haltExploring()
+
+        val episode = Episode(agent, maze)
+
+        //episode.play()
+        agent.memory.move(maze.start)
+        episode.recordSteps(maze.start)
+        while (!episode.atGoalState()) {
+            val action = episode.nextAction()
+            agent.memory.move(action)
+            episode.recordSteps(action)
+            println("Moved to $action")
         }
-        return optimalPath
+
+        println("Found optimalPath in ${episode.episodeSteps.size} steps.")
+        agent.resumeExploring(originalEpsilon)
+        return episode.episodeSteps
     }
 
     fun getLearnings(): MazeMemory {
@@ -128,3 +130,5 @@ fun getArrowDescDirection(currentRoom: Coordinate, nextRoom: Coordinate): Learni
     }
     throw RuntimeException("Unknown direction ${currentRoom} ${nextRoom}")
 }
+
+class TrainingInterruptedException(message: String) : Exception(message)

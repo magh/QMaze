@@ -172,7 +172,7 @@ class ViewController {
     fun startTraining() {
         println("Training")
         try {
-            learningController = maze?.let { LearningController(it, getTrainingConfig()) }
+            learningController = maze?.let { LearningController(it, mazeSpinnerEpisodes.value, getTrainingConfig()) }
             heatMap = learningController?.startLearning()
             resetComponents(TRAINED_STATE)
         } catch (te: TrainingInterruptedException) {
@@ -204,7 +204,7 @@ class ViewController {
     }
 
     private fun getTrainingConfig(): TrainingConfig {
-        return TrainingConfig(mazeSpinnerEpisodes.value, sliderGamma.value, sliderEpsilon.value, sliderAlpha.value)
+        return TrainingConfig(sliderGamma.value, sliderEpsilon.value, sliderAlpha.value)
     }
 
     private fun redrawMaze() {
