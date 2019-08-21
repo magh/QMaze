@@ -2,9 +2,6 @@ package qmaze.controller
 
 import qmaze.agent.Agent
 import qmaze.agent.NoWhereToGoException
-import qmaze.environment.Coordinate
-import qmaze.environment.Maze
-import qmaze.environment.getAdjoiningRooms
 import java.util.ArrayList
 
 private const val STEP_LIMIT = 5000
@@ -14,16 +11,16 @@ private const val STEP_LIMIT = 5000
  * @author katharine
  * The events that join the agent with the environment
  */
-class Episode(val agent: Agent, val maze: Maze) {
+class Episode<T>(val agent: Agent<T>, val game: Game<T>) {
 
-    val episodeSteps: MutableList<Coordinate> = ArrayList()
+    val episodeSteps: MutableList<T> = ArrayList()
 
     //Where is the agent?
     //Have a look around the mazeController
     //Decide on action
-    fun nextAction(): Coordinate {
+    fun nextAction(): T {
         try {
-            val adjoiningRooms = getAdjoiningRooms(agent.location(), maze.rooms)
+            val adjoiningRooms = game.getActions(agent.location())
             return agent.chooseAction(adjoiningRooms)
         } catch (e: NoWhereToGoException) {
             throw EpisodeInterruptedException(e, episodeSteps.size)
@@ -31,13 +28,13 @@ class Episode(val agent: Agent, val maze: Maze) {
     }
 
     fun play() {
-        agent.memory.move(maze.start)
-        recordSteps(maze.start)
+        agent.memory.move(game.getStart())
+        recordSteps(game.getStart())
         while (!atGoalState()) {
             val action = nextAction()
 
             //Did the mazeController give a reward?
-            val reward = maze.getRoom(action)!!.reward
+            val reward = game.getReward(action)
             agent.takeAction(action, reward)
 
             recordSteps(action)
@@ -45,7 +42,7 @@ class Episode(val agent: Agent, val maze: Maze) {
         println("Finished episode with ${episodeSteps.size} steps.")
     }
 
-    fun recordSteps(action: Coordinate) {
+    fun recordSteps(action: T) {
         episodeSteps.add(action)
         if (episodeSteps.size == STEP_LIMIT) {
             throw EpisodeInterruptedException("taking too long!", episodeSteps.size)
@@ -53,7 +50,7 @@ class Episode(val agent: Agent, val maze: Maze) {
     }
 
     fun atGoalState(): Boolean {
-        return agent.location() == maze.goal
+        return agent.location() == game.getGoal()
     }
 
 }

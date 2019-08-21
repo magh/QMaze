@@ -1,8 +1,8 @@
 package qmaze
 
 import qmaze.agent.MazeMemory
-import qmaze.controller.getArrowDescDirection
 import qmaze.environment.Coordinate
+import qmaze.environment.getArrowDescDirection
 
 fun printHeatMap(xSize: Int, ySize: Int, heatMap: Map<Coordinate, Int>) {
     for (y in 0 until ySize) {
@@ -16,7 +16,7 @@ fun printHeatMap(xSize: Int, ySize: Int, heatMap: Map<Coordinate, Int>) {
 fun printLearnings(
     xSize: Int,
     ySize: Int,
-    learnings: MazeMemory
+    learnings: MazeMemory<Coordinate>
 ) {
     for (y in 0 until ySize) {
         for (x in 0 until xSize) {

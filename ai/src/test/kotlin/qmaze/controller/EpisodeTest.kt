@@ -1,6 +1,7 @@
 package qmaze.controller
 
 import org.junit.Test
+import qmaze.MazeGame
 import qmaze.agent.Agent
 import qmaze.environment.Array2D
 import qmaze.environment.Coordinate
@@ -26,7 +27,7 @@ class EpisodeTest {
         val agent = Agent(start, 0.1, 0.1, 0.1)
         val rooms = Array2D<Room>(maze_size, maze_size, Room())
         val maze = Maze(rooms, start, goalState)
-        val ep = Episode(agent, maze)
+        val ep = Episode(agent, MazeGame(maze))
         //test
         ep.play()
         // verify

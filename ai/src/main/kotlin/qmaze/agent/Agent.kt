@@ -1,6 +1,5 @@
 package qmaze.agent
 
-import qmaze.environment.Coordinate
 import java.util.ArrayList
 
 /**
@@ -20,14 +19,14 @@ import java.util.ArrayList
  * - My movements overall - instead I am told to move at each step
  * and given information about the environment.
  */
-class Agent(
-    startingState: Coordinate,
+class Agent<T>(
+    startingState: T,
     private var probabilityExplore: Double,
     private val learningRate: Double,
     private val rewardDiscount: Double
 ) {
 
-    val memory: AgentMemory = AgentMemory(startingState)
+    val memory: AgentMemory<T> = AgentMemory(startingState)
 
     fun haltExploring(): Double {
         val originalEpsilon = probabilityExplore
@@ -39,13 +38,13 @@ class Agent(
         this.probabilityExplore = originalEpsilon
     }
 
-    fun location(): Coordinate {
+    fun location(): T {
         return memory.currentState
     }
 
-    fun chooseAction(nextAvailableActions: List<Coordinate>): Coordinate {
+    fun chooseAction(nextAvailableActions: List<T>): T {
         if (nextAvailableActions.isEmpty()) {
-            throw NoWhereToGoException(location())
+            throw NoWhereToGoException(location().toString())
         }
         return if (Math.random() < probabilityExplore) {
             pickRandomAction(nextAvailableActions)
@@ -54,7 +53,7 @@ class Agent(
         }
     }
 
-    fun takeAction(actionTaken: Coordinate, reward: Double) {
+    fun takeAction(actionTaken: T, reward: Double) {
         val currentQValue = memory.rewardFromAction(location(), actionTaken)
 
         // two step reward calc
@@ -70,13 +69,13 @@ class Agent(
         memory.move(actionTaken)
     }
 
-    private fun pickRandomAction(actions: List<Coordinate>): Coordinate {
+    private fun pickRandomAction(actions: List<T>): T {
         val choice = (Math.random() * actions.size.toDouble()).toInt()
         return actions[choice]
     }
 
-    private fun pickBestActionOrRandom(actions: List<Coordinate>): Coordinate {
-        var bestActions: MutableList<Coordinate> = ArrayList()
+    private fun pickBestActionOrRandom(actions: List<T>): T {
+        var bestActions: MutableList<T> = ArrayList()
         var highestReward = 0.0
 
         for (action in actions) {
@@ -94,10 +93,10 @@ class Agent(
         return pickRandomAction(bestActions)
     }
 
-    fun introduceSelf(startingState: Coordinate) {
+    fun introduceSelf(startingState: T) {
         println("I'm training with probabilityExplore: $probabilityExplore rewardDiscount: $rewardDiscount and learningRate: $learningRate\nStaring at $startingState")
     }
 
 }
 
-class NoWhereToGoException(state: Coordinate) : Exception("I have no-where to go from here: $state")
+class NoWhereToGoException(state: String) : Exception("I have no-where to go from here: $state")

@@ -18,14 +18,10 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
 import javafx.util.Duration
+import qmaze.agent.MutableMazeMemory
 import qmaze.controller.LearningController
-import qmaze.controller.TrainingConfig
 import qmaze.controller.TrainingInterruptedException
-import qmaze.controller.getArrowDescDirection
-import qmaze.environment.Array2D
-import qmaze.environment.Coordinate
-import qmaze.environment.Maze
-import qmaze.environment.Room
+import qmaze.environment.*
 import qmaze.view.ViewController.ControllerState.ADJUST_MAZE_STATE
 import qmaze.view.ViewController.ControllerState.ADJUST_PARAM_STATE
 import qmaze.view.ViewController.ControllerState.RESET_STATE
@@ -72,7 +68,7 @@ class ViewController {
     lateinit var qTableGrid: GridPane
     lateinit var mazeRoomGrid: GridPane
 
-    private var learningController: LearningController? = null
+    private var learningController: LearningController<Coordinate>? = null
 
     private var agentLocation: Coordinate? = null
 
@@ -125,7 +121,27 @@ class ViewController {
 
     private fun redrawQTable() {
         qTableGrid.clear()
-        learningController?.getLearnings()?.entries.orEmpty().forEach {
+        learningController?.getLearnings{memory->
+            val learnings: MutableMazeMemory<Coordinate> = HashMap()
+            maze?.let {
+                for (y in 0 until it.getYSize()) {
+                    for (x in 0 until it.getXSize()) {
+                        val room = it.getRoom(Coordinate(x, y))
+                        val roomLocation = Coordinate(x, y)
+                        if (room?.open == true) {
+                            val rewardFromRoom = HashMap<Coordinate, Double>()
+                            val potentialActions = memory.actionsForState(roomLocation)
+                            for (action in potentialActions) {
+                                val reward = memory.rewardFromAction(roomLocation, action)
+                                rewardFromRoom[action] = reward
+                            }
+                            learnings[roomLocation] = rewardFromRoom
+                        }
+                    }
+                }
+            }
+            return@getLearnings learnings
+        }?.entries.orEmpty().forEach {
             val textPane = Pane()
             val roomCoordinate = it.key
             val columnIndex = it.key.x
@@ -172,7 +188,15 @@ class ViewController {
     fun startTraining() {
         println("Training")
         try {
-            learningController = maze?.let { LearningController(it, mazeSpinnerEpisodes.value, getTrainingConfig()) }
+            learningController = maze?.let {
+                LearningController(
+                    MazeGame(it),
+                    mazeSpinnerEpisodes.value,
+                    sliderGamma.value,
+                    sliderEpsilon.value,
+                    sliderAlpha.value
+                )
+            }
             heatMap = learningController?.startLearning()
             resetComponents(TRAINED_STATE)
         } catch (te: TrainingInterruptedException) {
@@ -201,10 +225,6 @@ class ViewController {
     val sliderAlphaListener = ChangeListener<Number> { _, _, newValue ->
         sliderAlpha.value = newValue.toDouble()
         resetEpisodes()
-    }
-
-    private fun getTrainingConfig(): TrainingConfig {
-        return TrainingConfig(sliderGamma.value, sliderEpsilon.value, sliderAlpha.value)
     }
 
     private fun redrawMaze() {

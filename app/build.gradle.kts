@@ -25,6 +25,7 @@ val tornadofxVersion = "1.7.15"
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":ai"))
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("no.tornado:tornadofx:$tornadofxVersion")

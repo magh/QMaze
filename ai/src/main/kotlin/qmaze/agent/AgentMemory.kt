@@ -1,6 +1,5 @@
 package qmaze.agent
 
-import qmaze.environment.Coordinate
 import java.util.HashMap
 
 /**
@@ -16,11 +15,11 @@ import java.util.HashMap
  * then set starting state before anything else can happen.
  * Why not do this in the constructor? We use the memory for multiple episodes.
  */
-class AgentMemory(var currentState: Coordinate) {
+class AgentMemory<T>(var currentState: T) {
 
-    private val mazeMemory: MutableMazeMemory = HashMap()
+    private val mazeMemory: MutableMazeMemory<T> = HashMap()
 
-    fun updateMemory(action: Coordinate, reward: Double) {
+    fun updateMemory(action: T, reward: Double) {
         // get possible actions
         val nextSteps = mazeMemory[currentState].orEmpty().toMutableMap()
         // get current reward for action
@@ -31,23 +30,23 @@ class AgentMemory(var currentState: Coordinate) {
         mazeMemory[currentState] = nextSteps
     }
 
-    fun move(action: Coordinate) {
+    fun move(action: T) {
         currentState = action
     }
 
     //What do I remember about future actions>
-    fun actionsForState(state: Coordinate): List<Coordinate> {
+    fun actionsForState(state: T): List<T> {
         val nextSteps = mazeMemory[state].orEmpty()
         return nextSteps.keys.toList()
     }
 
-    fun rewardFromAction(state: Coordinate, action: Coordinate): Double {
+    fun rewardFromAction(state: T, action: T): Double {
         //Nope, no memory of next steps or moving into this room.
         return mazeMemory[state]?.get(action) ?: 0.0
     }
 
 }
 
-typealias MazeMemory = Map<Coordinate, Map<Coordinate, Double>>
+typealias MazeMemory<T> = Map<T, Map<T, Double>>
 
-typealias MutableMazeMemory = MutableMap<Coordinate, Map<Coordinate, Double>>
+typealias MutableMazeMemory<T> = MutableMap<T, Map<T, Double>>

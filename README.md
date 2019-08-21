@@ -14,9 +14,9 @@ Dive in: [see this great book](https://mitpress.mit.edu/books/reinforcement-lear
 
 ## Configuration
 
-Epsilon (Probability Explore): 
-Gamma (Reward Discount): 
-Alpha (Learning Rate): 
+Epsilon (Probability Explore): Default 0.1
+Gamma (Reward Discount): Default 0.7
+Alpha (Learning Rate): Default 0.1
 
 ## Reinforcement Learning?
 
